@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://smart-notes-kz6i.onrender.com/', // ← replace this with your Render URL
+  // DIRECT CONNECTION: We are pasting the Render URL here explicitly.
+  // This bypasses Vercel's routing logic completely.
+  baseURL: 'https://smart-notes-kz6i.onrender.com/api', 
 });
 
-// Automatically add the Token to every request if it exists
 instance.interceptors.request.use((config) => {
   const user = JSON.parse(localStorage.getItem('userInfo'));
   if (user && user.token) {
