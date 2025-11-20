@@ -1,13 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-// FIX: Change named import { vitePluginRewriteAll } to default import and rename it
-import rewriteAllPlugin from 'vite-plugin-rewrite-all' 
+import rewriteAllPlugin from 'vite-plugin-rewrite-all'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // --- ADD THIS LINE ---
+  base: './', 
+  // ---------------------
   plugins: [
     react(),
-    rewriteAllPlugin() // <--- Use the imported function name here
+    rewriteAllPlugin()
   ],
   server: {
     port: 3000,
