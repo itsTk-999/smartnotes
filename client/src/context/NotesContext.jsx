@@ -7,9 +7,10 @@ export const useNotes = () => useContext(NotesContext);
 
 export const NotesProvider = ({ children }) => {
   const { user } = useAuth();
+  
+  // DIRECT URL (Double check this is your correct Render link)
   const BASE_URL = "https://smart-notes-kz6i.onrender.com/api/notes";
 
-  // Helper to get headers with Token
   const getHeaders = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     return {
@@ -18,7 +19,6 @@ export const NotesProvider = ({ children }) => {
     };
   };
 
-  // Load offline notes first
   const [notes, setNotes] = useState(() => {
     const saved = localStorage.getItem('offlineNotes');
     return saved ? JSON.parse(saved) : [];
@@ -28,7 +28,7 @@ export const NotesProvider = ({ children }) => {
     if (user) fetchNotes();
   }, [user]);
 
-  // --- DIRECT FETCH: GET NOTES ---
+  // --- FETCH ---
   const fetchNotes = async () => {
     try {
       const response = await fetch(BASE_URL, {
@@ -43,22 +43,27 @@ export const NotesProvider = ({ children }) => {
       localStorage.setItem('offlineNotes', JSON.stringify(data));
       return data;
     } catch (error) {
-      console.log("Offline mode or Server Error: Using cached notes.");
+      console.log("Sync Error: Using local backup.");
       return [];
     }
   };
 
-  // --- DIRECT FETCH: ADD NOTE ---
+  // --- ADD ---
   const addNote = async (newNoteData) => {
+    // 1. Optimistic Add (Show it immediately)
+    // We generate a temp ID so React can render it
+    const tempNote = { ...newNoteData, _id: Date.now() };
+    const previousNotes = [...notes]; // Backup in case of error
+    
+    const updatedNotes = [tempNote, ...notes];
+    setNotes(updatedNotes);
+    
     try {
       const payload = {
         title: newNoteData.title,
         content: newNoteData.content, 
         subject: newNoteData.subject,
-        objectives: newNoteData.objectives.map(obj => ({ 
-          text: obj.text,
-          isMastered: false 
-        }))
+        objectives: newNoteData.objectives.map(obj => ({ text: obj.text, isMastered: false }))
       };
 
       const response = await fetch(BASE_URL, {
@@ -67,78 +72,88 @@ export const NotesProvider = ({ children }) => {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('Failed to save');
-      const data = await response.json();
+      if (!response.ok) throw new Error('Failed to save to DB');
       
-      const updatedNotes = [data, ...notes];
-      setNotes(updatedNotes);
-      localStorage.setItem('offlineNotes', JSON.stringify(updatedNotes));
+      // 2. Server Success: Replace Temp ID with Real ID
+      const data = await response.json();
+      const finalNotes = [data, ...notes];
+      setNotes(finalNotes);
+      localStorage.setItem('offlineNotes', JSON.stringify(finalNotes));
       
     } catch (error) {
-      alert("Could not save note to server. Check connection.");
+      alert("Error: Could not save note to server.");
+      setNotes(previousNotes); // Revert change
     }
   };
 
-  // --- DIRECT FETCH: UPDATE NOTE ---
+  // --- UPDATE ---
   const updateNote = async (id, updatedData) => {
-    try {
-      const sanitizedObjectives = updatedData.objectives.map(obj => {
+    const previousNotes = [...notes]; // Backup
+
+    const sanitizedObjectives = updatedData.objectives.map(obj => {
         if (typeof obj._id === 'number') {
           return { text: obj.text, isMastered: obj.isMastered || false };
         }
         return obj;
-      });
+    });
 
-      const payload = {
-        title: updatedData.title,
-        content: updatedData.content, 
-        subject: updatedData.subject,
-        objectives: sanitizedObjectives 
-      };
-
-      // Optimistic Update
-      const updatedList = notes.map(note => 
+    // Optimistic Update
+    const updatedList = notes.map(note => 
         note._id === id ? { ...note, ...updatedData, objectives: sanitizedObjectives } : note
-      );
-      setNotes(updatedList);
-      localStorage.setItem('offlineNotes', JSON.stringify(updatedList));
+    );
+    setNotes(updatedList);
 
-      // Send to Server
-      const response = await fetch(`${BASE_URL}/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(payload)
-      });
+    try {
+        const response = await fetch(`${BASE_URL}/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                title: updatedData.title,
+                content: updatedData.content, 
+                subject: updatedData.subject,
+                objectives: sanitizedObjectives 
+            })
+        });
 
-      if (!response.ok) throw new Error('Update failed');
-      const data = await response.json();
-      
-      const finalList = notes.map(note => note._id === id ? data : note);
-      setNotes(finalList);
-      localStorage.setItem('offlineNotes', JSON.stringify(finalList));
+        if (!response.ok) throw new Error('Update failed');
+        
+        // Sync with server response
+        const data = await response.json();
+        const finalList = notes.map(note => note._id === id ? data : note);
+        setNotes(finalList);
+        localStorage.setItem('offlineNotes', JSON.stringify(finalList));
 
     } catch (error) {
-      console.error("Error updating note on server");
+        console.error("Update failed:", error);
+        // We don't alert on update to allow typing speed, but we log it
     }
   };
 
-  // --- DIRECT FETCH: DELETE NOTE ---
+  // --- DELETE (The Fix) ---
   const deleteNote = async (id) => {
+    const previousNotes = [...notes]; // Backup
+    
+    // 1. Optimistic Delete
     const filteredNotes = notes.filter(n => n._id !== id);
     setNotes(filteredNotes);
     localStorage.setItem('offlineNotes', JSON.stringify(filteredNotes));
 
     try {
-      await fetch(`${BASE_URL}/${id}`, {
+      // 2. Send Delete to Server
+      const response = await fetch(`${BASE_URL}/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });
+
+      if (!response.ok) throw new Error('Delete failed');
+
     } catch (error) {
-      console.error("Failed to delete note on server");
+      alert("Error: Could not delete note from server. It will reappear.");
+      setNotes(previousNotes); // Put it back if server failed
+      localStorage.setItem('offlineNotes', JSON.stringify(previousNotes));
     }
   };
 
-  // --- HELPERS (No API calls needed) ---
   const toggleMastery = async (noteId, objectiveId) => {
     const note = notes.find(n => n._id === noteId);
     if (!note) return;

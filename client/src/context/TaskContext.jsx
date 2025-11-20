@@ -26,7 +26,7 @@ export const TaskProvider = ({ children }) => {
     if (user) fetchTasks();
   }, [user]);
 
-  // --- WATCHER FOR NOTIFICATIONS ---
+  // Notification Watcher
   useEffect(() => {
     if (Notification.permission !== 'granted') {
       Notification.requestPermission();
@@ -48,8 +48,6 @@ export const TaskProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [tasks]);
 
-  // --- DIRECT API CALLS ---
-
   const fetchTasks = async () => {
     try {
       const response = await fetch(BASE_URL, { method: 'GET', headers: getHeaders() });
@@ -58,11 +56,13 @@ export const TaskProvider = ({ children }) => {
       setTasks(data);
       localStorage.setItem('offlineTasks', JSON.stringify(data));
     } catch (error) {
-      console.log("Offline mode: Using cached tasks.");
+      console.log("Using cached tasks.");
     }
   };
 
   const addTask = async (text, urgency, dueDate) => {
+    const previousTasks = [...tasks];
+    
     try {
       const response = await fetch(BASE_URL, {
         method: 'POST',
@@ -78,43 +78,52 @@ export const TaskProvider = ({ children }) => {
       localStorage.setItem('offlineTasks', JSON.stringify(updatedTasks));
 
     } catch (error) {
-      alert("You are offline. Task cannot be created.");
+      alert("Error: Could not save task.");
     }
   };
 
   const toggleTask = async (id) => {
     const taskIndex = tasks.findIndex(t => t._id === id);
     if (taskIndex === -1) return;
+    
+    const previousTasks = [...tasks]; // Backup
 
     const updatedTasks = [...tasks];
     updatedTasks[taskIndex].completed = !updatedTasks[taskIndex].completed;
     
     setTasks(updatedTasks);
-    localStorage.setItem('offlineTasks', JSON.stringify(updatedTasks));
 
     try {
-      await fetch(`${BASE_URL}/${id}`, {
+      const res = await fetch(`${BASE_URL}/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ completed: updatedTasks[taskIndex].completed })
       });
+      if (!res.ok) throw new Error("Failed");
+      localStorage.setItem('offlineTasks', JSON.stringify(updatedTasks));
     } catch (error) {
       console.error("Failed to sync task status");
+      setTasks(previousTasks); // Revert if failed
     }
   };
 
   const deleteTask = async (id) => {
+    const previousTasks = [...tasks]; // Backup
+
     const filteredTasks = tasks.filter(t => t._id !== id);
     setTasks(filteredTasks);
     localStorage.setItem('offlineTasks', JSON.stringify(filteredTasks));
     
     try {
-      await fetch(`${BASE_URL}/${id}`, {
+      const res = await fetch(`${BASE_URL}/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });
+      if (!res.ok) throw new Error("Failed");
     } catch (error) {
-      console.error("Failed to sync delete");
+      alert("Error: Could not delete task. Server unavailable.");
+      setTasks(previousTasks); // Revert
+      localStorage.setItem('offlineTasks', JSON.stringify(previousTasks));
     }
   };
 
