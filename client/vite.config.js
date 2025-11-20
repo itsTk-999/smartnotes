@@ -2,11 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import rewriteAllPlugin from 'vite-plugin-rewrite-all'
 
-// https://vitejs.dev/config/
+// Setting 'base' to './' is the most reliable way to tell Vite
+// to serve assets relative to the current location (Vercel domain).
 export default defineConfig({
-  // --- ADD THIS LINE ---
   base: './', 
-  // ---------------------
   plugins: [
     react(),
     rewriteAllPlugin()
@@ -21,4 +20,4 @@ export default defineConfig({
       }
     }
   }
-})
+});

@@ -1,8 +1,28 @@
 {
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "https://smart-notes-i54i.onrender.com/api/$1"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://smart-notes-i54i.onrender.com/api/$1"
+    },
+    {
+      "src": "/[^.]+",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
     }
   ]
 }
