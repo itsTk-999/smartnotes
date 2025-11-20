@@ -8,13 +8,13 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://smart-notes-i54i.onrender.com/api/$1"
+      "destination": "https://smart-notes-kz6i.onrender.com/api/$1"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://smart-notes-i54i.onrender.com/api/$1"
+      "dest": "https://smart-notes-kz6i.onrender.com/api/$1"
     },
     {
       "src": "/(.*)",

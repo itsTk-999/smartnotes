@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://smart-notes-i54i.onrender.com/api', // ← replace this with your Render URL
+  baseURL: 'https://smart-notes-kz6i.onrender.com/', // ← replace this with your Render URL
 });
 
 // Automatically add the Token to every request if it exists
