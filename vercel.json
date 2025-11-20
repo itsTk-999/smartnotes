@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://smart-notes-i54i.onrender.com/api/$1"
+    }
+  ]
+}
