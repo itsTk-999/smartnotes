@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Mail, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Loader2, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import api from '../api/axios';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -16,11 +15,25 @@ const ForgotPassword = () => {
     setError('');
     setMessage('');
 
+    // DIRECT BACKEND CONNECTION
+    const URL = "https://smart-notes-kz6i.onrender.com/api/auth/forgot-password";
+
     try {
-      const { data } = await api.post('/auth/forgot-password', { email });
-      setMessage(data.message);
+      const response = await fetch(URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      setMessage(data.message || "Reset link sent successfully!");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      setError(err.message || "Failed to connect to server");
     } finally {
       setIsLoading(false);
     }
@@ -43,6 +56,9 @@ const ForgotPassword = () => {
         </Link>
 
         <div className="text-center mb-8 mt-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-500 mb-4 shadow-sm">
+             <Sparkles size={24} />
+          </div>
           <h1 className="text-3xl font-black text-primary dark:text-white tracking-tight">Reset Password</h1>
           <p className="text-secondary dark:text-dark-subtext mt-2 font-medium">Enter your email to receive a recovery link.</p>
         </div>

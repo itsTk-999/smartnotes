@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import api from '../api/axios';
 import { useAuth } from './AuthContext';
 
 const TaskContext = createContext();
@@ -8,8 +7,16 @@ export const useTasks = () => useContext(TaskContext);
 
 export const TaskProvider = ({ children }) => {
   const { user } = useAuth();
+  const BASE_URL = "https://smart-notes-kz6i.onrender.com/api/tasks";
 
-  // 1. LOAD FROM LOCAL STORAGE
+  const getHeaders = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': userInfo ? `Bearer ${userInfo.token}` : ''
+    };
+  };
+
   const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem('offlineTasks');
     return saved ? JSON.parse(saved) : [];
@@ -19,43 +26,35 @@ export const TaskProvider = ({ children }) => {
     if (user) fetchTasks();
   }, [user]);
 
-  // --- NEW: NOTIFICATION WATCHER ---
-  // Checks every minute if a task is due
+  // --- WATCHER FOR NOTIFICATIONS ---
   useEffect(() => {
     if (Notification.permission !== 'granted') {
       Notification.requestPermission();
     }
-
     const interval = setInterval(() => {
       const now = new Date();
-      
       tasks.forEach(task => {
         if (task.completed || !task.dueDate) return;
-        
         const taskDate = new Date(task.dueDate);
         const diff = taskDate - now;
-
-        // If task is due within the last 60 seconds (so we don't notify twice)
-        // and it hasn't passed significantly yet
         if (diff <= 0 && diff > -60000) {
           new Notification(`Reminder: ${task.text}`, {
-            body: "This task is due now! Let's get it done.",
+            body: "This task is due now!",
             icon: '/vite.svg'
           });
-          
-          // Optional: Play a subtle sound
-          const audio = new Audio('https://cdn.freesound.org/previews/536/536774_11648529-lq.mp3'); // Zen Bell
-          audio.play().catch(e => console.log(e));
         }
       });
-    }, 60000); // Check every minute
-
+    }, 60000);
     return () => clearInterval(interval);
   }, [tasks]);
 
+  // --- DIRECT API CALLS ---
+
   const fetchTasks = async () => {
     try {
-      const { data } = await api.get('/tasks');
+      const response = await fetch(BASE_URL, { method: 'GET', headers: getHeaders() });
+      if (!response.ok) throw new Error('Failed');
+      const data = await response.json();
       setTasks(data);
       localStorage.setItem('offlineTasks', JSON.stringify(data));
     } catch (error) {
@@ -63,10 +62,16 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
-  // --- UPDATED ADD TASK (Accepts dueDate) ---
   const addTask = async (text, urgency, dueDate) => {
     try {
-      const { data } = await api.post('/tasks', { text, urgency, dueDate });
+      const response = await fetch(BASE_URL, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ text, urgency, dueDate })
+      });
+
+      if (!response.ok) throw new Error('Failed');
+      const data = await response.json();
       
       const updatedTasks = [data, ...tasks];
       setTasks(updatedTasks);
@@ -88,7 +93,11 @@ export const TaskProvider = ({ children }) => {
     localStorage.setItem('offlineTasks', JSON.stringify(updatedTasks));
 
     try {
-      await api.put(`/tasks/${id}`, { completed: updatedTasks[taskIndex].completed });
+      await fetch(`${BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ completed: updatedTasks[taskIndex].completed })
+      });
     } catch (error) {
       console.error("Failed to sync task status");
     }
@@ -96,12 +105,14 @@ export const TaskProvider = ({ children }) => {
 
   const deleteTask = async (id) => {
     const filteredTasks = tasks.filter(t => t._id !== id);
-    
     setTasks(filteredTasks);
     localStorage.setItem('offlineTasks', JSON.stringify(filteredTasks));
     
     try {
-      await api.delete(`/tasks/${id}`);
+      await fetch(`${BASE_URL}/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      });
     } catch (error) {
       console.error("Failed to sync delete");
     }

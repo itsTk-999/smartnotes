@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react'; // Added Eye icons
+import { Lock, Loader2, CheckCircle2, AlertCircle, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../api/axios';
 
 const ResetPassword = () => {
   const { id, token } = useParams();
@@ -10,9 +9,9 @@ const ResetPassword = () => {
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false); // <--- NEW STATE
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // <--- NEW STATE
-  
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -27,12 +26,26 @@ const ResetPassword = () => {
     setIsLoading(true);
     setError('');
 
+    // DIRECT BACKEND CONNECTION
+    const URL = `https://smart-notes-kz6i.onrender.com/api/auth/reset-password/${id}/${token}`;
+
     try {
-      await api.post(`/auth/reset-password/${id}/${token}`, { password });
+      const response = await fetch(URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid or expired link");
+      }
+
       setMessage("Password Reset Successful!");
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid or expired token");
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +68,7 @@ const ResetPassword = () => {
             <Sparkles size={28} />
           </div>
           <h1 className="text-3xl font-black text-primary dark:text-white tracking-tight">New Password</h1>
-          <p className="text-secondary dark:text-dark-subtext mt-2 font-medium">Secure your account with a new key.</p>
+          <p className="text-secondary dark:text-dark-subtext mt-2 font-medium text-center">Secure your account with a new key.</p>
         </div>
 
         <AnimatePresence mode='wait'>
@@ -71,53 +84,49 @@ const ResetPassword = () => {
               <Link to="/login" className="text-sm text-warm-orange font-bold hover:underline mt-4">Go to Login</Link>
             </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
                
-               {/* New Password Input (with Toggle) */}
+               {/* New Password Input */}
                <div className="relative group">
                  <div className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-warm-orange transition-colors">
                     <Lock size={20} />
                  </div>
                  <input 
-                   // Set input type based on state
                    type={showNewPassword ? "text" : "password"} 
                    required
                    value={password}
                    onChange={(e) => setPassword(e.target.value)}
-                   className="w-full pl-12 pr-12 py-4 bg-white dark:bg-dark-bg rounded-2xl border-2 border-transparent focus:border-warm-orange outline-none text-primary dark:text-white placeholder-gray-400 font-medium transition-all shadow-sm"
+                   className="w-full pl-12 pr-12 py-4 bg-white dark:bg-dark-bg rounded-2xl border-2 border-transparent focus:border-warm-orange outline-none text-primary dark:text-white placeholder-gray-400 dark:placeholder-gray-600 font-medium transition-all shadow-sm"
                    placeholder="New Password"
                  />
-                 {/* Toggle Button */}
                  <button 
-                     type="button" 
-                     onClick={() => setShowNewPassword(!showNewPassword)}
-                     className="absolute right-4 top-3.5 text-gray-400 hover:text-primary dark:hover:text-white transition-colors p-0 border-none bg-transparent"
+                    type="button" 
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-4 top-3.5 text-gray-400 hover:text-primary dark:hover:text-white transition-colors p-0 border-none bg-transparent"
                  >
-                     {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                  </button>
               </div>
               
-              {/* Confirm Password Input (with Toggle) */}
+              {/* Confirm Password Input */}
               <div className="relative group">
                  <div className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-warm-orange transition-colors">
                     <Lock size={20} />
                  </div>
                  <input 
-                   // Set input type based on state
                    type={showConfirmPassword ? "text" : "password"} 
                    required
                    value={confirmPassword}
                    onChange={(e) => setConfirmPassword(e.target.value)}
-                   className="w-full pl-12 pr-12 py-4 bg-white dark:bg-dark-bg rounded-2xl border-2 border-transparent focus:border-warm-orange outline-none text-primary dark:text-white placeholder-gray-400 font-medium transition-all shadow-sm"
+                   className="w-full pl-12 pr-12 py-4 bg-white dark:bg-dark-bg rounded-2xl border-2 border-transparent focus:border-warm-orange outline-none text-primary dark:text-white placeholder-gray-400 dark:placeholder-gray-600 font-medium transition-all shadow-sm"
                    placeholder="Confirm New Password"
                  />
-                 {/* Toggle Button */}
                  <button 
-                     type="button" 
-                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                     className="absolute right-4 top-3.5 text-gray-400 hover:text-primary dark:hover:text-white transition-colors p-0 border-none bg-transparent"
+                    type="button" 
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-3.5 text-gray-400 hover:text-primary dark:hover:text-white transition-colors p-0 border-none bg-transparent"
                  >
-                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                  </button>
               </div>
 
