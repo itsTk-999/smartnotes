@@ -1,0 +1,342 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  /* Light Mode Default */
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode Override */
+.dark body {
+  background-color: #020617; /* Deep Dark Slate */
+  color: #f8fafc;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* Custom Editor Styles Fix */
+.dark .ql-toolbar {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+.dark .ql-stroke {
+  stroke: #94a3b8 !important;
+}
+.dark .ql-picker {
+  color: #94a3b8 !important;
+}
+/* Smooth Page Transition Helper */
+.page-transition {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ... existing styles ... */
+
+/* CUSTOM EDITOR STYLING */
+.quill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ql-toolbar.ql-snow {
+  border: none !important;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  flex: 1;
+  font-family: "Inter", sans-serif;
+  font-size: 1.1rem;
+  color: #2d3436;
+}
+
+.ql-editor {
+  padding: 0 !important;
+  min-height: 300px;
+}
+
+/* Hide the placeholder when typing */
+.ql-editor.ql-blank::before {
+  font-style: normal;
+  color: #cbd5e0;
+}
+@keyframes pulse-slow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 112, 67, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 112, 67, 0);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s infinite;
+}
+/* ... existing styles ... */
+
+/* CALENDAR OVERRIDES */
+.react-calendar {
+  width: 100%;
+  border: none;
+  font-family: "Inter", sans-serif;
+  background: transparent;
+}
+
+.react-calendar__navigation {
+  display: flex;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3436;
+}
+
+.react-calendar__month-view__weekdays {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a0aec0;
+  letter-spacing: 0.05em;
+  text-decoration: none !important; /* Remove dots/underlines */
+}
+/* Specifically target the abbreviation text inside */
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+.react-calendar__tile {
+  padding: 1.2rem 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2d3436;
+  border-radius: 12px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.react-calendar__tile:hover {
+  background-color: #f4f6f8;
+  color: #ff7043;
+}
+
+.react-calendar__tile--active,
+.react-calendar__tile--active:hover {
+  background-color: #ff7043 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
+}
+
+.react-calendar__tile--now {
+  background-color: #fff3e0;
+  color: #ff7043;
+}
+
+/* DOT INDICATOR FOR TASKS */
+.has-task::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #ff7043;
+  border-radius: 50%;
+}
+
+.react-calendar {
+  width: 100%;
+  border: none;
+  font-family: "Inter", sans-serif;
+  background: transparent !important; /* Ensures BentoCard bg shows through */
+}
+
+.react-calendar__navigation {
+  display: flex;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a; /* Light Mode Text */
+}
+
+/* Dark Mode Text for Month Title */
+.dark .react-calendar__navigation button {
+  color: #f8fafc;
+}
+
+.react-calendar__navigation button:disabled {
+  background-color: transparent;
+}
+
+/* Weekday Labels (Mon, Tue...) */
+.react-calendar__month-view__weekdays {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8; /* Slate 400 */
+  letter-spacing: 0.05em;
+  text-decoration: none !important;
+  margin-bottom: 1rem;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+/* The Days (Tiles) */
+.react-calendar__tile {
+  padding: 1.5rem 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #334155; /* Slate 700 */
+  border-radius: 16px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+/* Dark Mode Day Text */
+.dark .react-calendar__tile {
+  color: #cbd5e0; /* Slate 300 */
+}
+
+/* Hover State */
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: #f1f5f9; /* Light Hover */
+  color: #f97316;
+}
+
+.dark .react-calendar__tile:enabled:hover,
+.dark .react-calendar__tile:enabled:focus {
+  background-color: #1e293b; /* Dark Hover (Slate 800) */
+  color: #f97316;
+}
+
+/* Selected Date (Active) */
+.react-calendar__tile--active,
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background-color: #f97316 !important; /* Warm Orange */
+  color: white !important;
+  box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.3);
+}
+
+/* Today's Date (Now) */
+.react-calendar__tile--now {
+  background-color: #ffedd5; /* Orange 100 */
+  color: #f97316;
+}
+
+.dark .react-calendar__tile--now {
+  background-color: #334155; /* Slate 700 */
+  color: #f97316;
+}
+
+/* --- TASK DOT INDICATOR --- */
+.has-task::after {
+  content: "";
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #f97316;
+  border-radius: 50%;
+}
+
+/* Hide dot if selected to keep it clean */
+.react-calendar__tile--active.has-task::after {
+  background-color: white;
+}
+
+/* 1. Make the typing text white */
+.dark .ql-editor {
+  color: #f8fafc !important; /* Bright White */
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* 2. Make the "Start typing..." placeholder visible (Light Grey) */
+.dark .ql-editor.ql-blank::before {
+  color: #94a3b8 !important; /* Slate 400 */
+  font-style: normal;
+}
+
+/* 3. Fix the Toolbar background in Dark Mode */
+.dark .ql-toolbar {
+  background-color: #1e293b !important; /* Slate 800 */
+  border-color: #334155 !important;
+  border-radius: 12px 12px 0 0;
+}
+
+.dark .ql-container {
+  border-color: #334155 !important;
+}
+
+/* 4. Fix the Toolbar Icons (Bold, Italic, etc) to be White */
+.dark .ql-snow .ql-stroke {
+  stroke: #e2e8f0 !important;
+}
+.dark .ql-snow .ql-fill {
+  fill: #e2e8f0 !important;
+}
+.dark .ql-snow .ql-picker {
+  color: #e2e8f0 !important;
+}
