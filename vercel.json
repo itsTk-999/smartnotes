@@ -17,11 +17,7 @@
       "dest": "https://smart-notes-i54i.onrender.com/api/$1"
     },
     {
-      "src": "/[^.]+",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ]
