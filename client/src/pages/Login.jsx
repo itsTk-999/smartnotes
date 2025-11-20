@@ -1,49 +1,78 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Loader2, AlertCircle, Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+// We keep useAuth to access the context, but we will bypass the login function for this test
 import { useAuth } from '../context/AuthContext'; 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const { login, register } = useAuth();
+  const navigate = useNavigate();
   
   const [isRegistering, setIsRegistering] = useState(false); 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Password visibility toggle
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // --- CORRECT STATE FOR TOGGLE ---
-  const [showPassword, setShowPassword] = useState(false); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    let res;
-    if (isRegistering) {
-      res = await register(name, email, password);
-    } else {
-      res = await login(email, password);
-    }
+    // --- DIRECT CONNECTION CONFIGURATION ---
+    // This bypasses all local proxies and Vercel rewrites.
+    // It talks directly to your Render server.
+    const BACKEND_BASE_URL = "https://smart-notes-kz6i.onrender.com/api/auth"; 
+    
+    const endpoint = isRegistering ? `${BACKEND_BASE_URL}/register` : `${BACKEND_BASE_URL}/login`;
+    const payload = isRegistering ? { name, email, password } : { email, password };
 
-    setIsLoading(false);
-    if (!res.success) {
-      setError(res.message);
+    try {
+      console.log(`Attempting direct fetch to: ${endpoint}`);
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Server rejected the request");
+      }
+
+      // --- SUCCESSFUL LOGIN ---
+      console.log("Login Success:", data);
+      
+      // 1. Manually save the user data to storage (AuthContext reads this on load)
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      
+      // 2. Force a hard redirect to the dashboard
+      // This ensures AuthContext re-initializes with the new data
+      window.location.href = '/'; 
+
+    } catch (err) {
+      console.error("Login Error:", err);
+      setError(err.message || "Failed to connect to server. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background dark:bg-dark-bg relative overflow-hidden transition-colors duration-300 p-4">
       
-      {/* Aurora Background */}
+      {/* --- DECORATIVE AURORA BACKGROUND --- */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-purple-500/30 rounded-full blur-[120px] animate-pulse-slow pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-warm-orange/20 rounded-full blur-[120px] animate-pulse-slow pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
       
-      {/* MAIN CARD */}
+      {/* --- MAIN CARD --- */}
       <motion.div 
         layout
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -81,7 +110,7 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5 relative z-20">
           
-          {/* Name Field */}
+          {/* Name Field (Register Only) */}
           <AnimatePresence>
             {isRegistering && (
               <motion.div 
@@ -122,13 +151,12 @@ const Login = () => {
             />
           </div>
           
-          {/* Password Field (with Toggle) */}
+          {/* Password Field */}
           <div className="relative group">
             <div className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-warm-orange transition-colors">
                 <Lock size={20} />
             </div>
             <input 
-              // --- FIX: Use showPassword state here ---
               type={showPassword ? "text" : "password"} 
               required
               value={password}
@@ -136,14 +164,12 @@ const Login = () => {
               className="w-full pl-12 pr-12 py-4 bg-white dark:bg-dark-bg rounded-2xl border-2 border-transparent focus:border-warm-orange outline-none text-primary dark:text-white placeholder-gray-400 dark:placeholder-gray-600 font-medium transition-all shadow-sm"
               placeholder="••••••••"
             />
-            {/* Toggle Button */}
+            {/* Eye Toggle */}
             <button 
                 type="button" 
-                // --- FIX: Toggle setShowPassword state here ---
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-3.5 text-gray-400 hover:text-primary dark:hover:text-white transition-colors p-0 border-none bg-transparent"
+                className="absolute right-4 top-3.5 text-gray-400 hover:text-primary dark:hover:text-white transition-colors p-0 border-none bg-transparent cursor-pointer"
             >
-                {/* --- FIX: Display icon based on showPassword state --- */}
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
@@ -157,7 +183,7 @@ const Login = () => {
             </div>
           )}
 
-          {/* Action Button */}
+          {/* Submit Button */}
           <button 
             type="submit" 
             disabled={isLoading} 
@@ -182,7 +208,7 @@ const Login = () => {
                 setIsRegistering(!isRegistering);
                 setError(''); 
               }}
-              className="text-warm-orange hover:text-orange-600 font-bold hover:underline ml-1 transition-colors"
+              className="text-warm-orange hover:text-orange-600 font-bold hover:underline ml-1 transition-colors cursor-pointer"
             >
               {isRegistering ? "Sign In" : "Create Account"}
             </button>
